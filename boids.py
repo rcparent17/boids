@@ -48,23 +48,37 @@ class Bird(object):
         self.shape[0] = p1
         self.shape[1] = p2
         self.shape[2] = p3
-        pygame.gfxdraw.filled_polygon(screen, self.shape, (250,200,200))
+        pygame.gfxdraw.filled_polygon(screen, self.shape, (250,50,100))
 
     def updateAngle(self):
+        angleAvg = 0
         for bird in self.birds:
             dAndVec = self.dAndVecTo(bird)
             if dAndVec[0]<self.turnDist:
-                vector = pygame.math.Vector2(dAndVec[1], dAndVec[2])
-                angleTo = self.movement.angle_to(vector)
-                if angleTo < 0:
-                    angleTo = angleTo + 360
-                if not dAndVec[0] == 0:
+                if not dAndVec[0] == 0: #if not self
+                    angleAvg = angleAvg + self.angle
+                    vector = pygame.math.Vector2(dAndVec[1], dAndVec[2])
+                    angleTo = self.movement.angle_to(vector)
+                    if angleTo < 0:
+                        angleTo = angleTo + 360
+
+                    #debug
                     print("Angle from bird #" + str(self.ID) + " to bird #" + str(bird.ID) + ": " + str(self.movement.angle_to(vector)))
                     print("Distance from bird #" + str(self.ID) + " to bird #" + str(bird.ID) + ": " + str(dAndVec[0]))
+
+                    #turn away from birds in front
                     if angleTo > 270:
                         self.angle = self.angle + self.angularVel
                     elif angleTo < 90:
                         self.angle = self.angle - self.angularVel
+
+                    #try to match abngle of nearby birds
+        angleAvg = angleAvg / (len(self.birds)-1)
+        print("Average angle near bird #" + str(self.ID) + ": " + str())
+        if self.angle > angleAvg:
+            self.angle = self.angle - self.angularVel
+        elif self.angle < angleAvg:
+            self.angle = self.angle + self.angularVel
         #bounds
         right = False
         left = False
@@ -124,7 +138,7 @@ class Bird(object):
 def run():
     running = True
     while running:
-        clock.tick(50)
+        clock.tick(120)
         pygame.draw.rect(screen, pygame.Color("#222222"), [0,0, width, height])
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
