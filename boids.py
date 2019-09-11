@@ -1,4 +1,5 @@
 import pygame
+import pygame.gfxdraw
 import math
 import random
 from pygame.locals import *
@@ -19,13 +20,13 @@ class Bird(object):
 
     angle = 0
     vel = 2
-    size = 10
+    size = 7
     birds = []
     shape = [[],[],[]]
     movement = 0
     center = [0,0]
-    angularVel = .02
-    turnDist = 30
+    angularVel = .1
+    turnDist = 70
     ID = 0
 
     def __init__(self, x, y, angle, ID):
@@ -34,14 +35,6 @@ class Bird(object):
         self.angle = angle
         self.movement = pygame.math.Vector2(self.vel*math.cos(self.angle),self.vel*math.sin(self.angle))
         self.ID = ID
-
-    def getID(self):
-        return self.ID
-
-    def setBirds(self):
-        for bird in birdList:
-            if not bird.getID() == self.ID:
-                self.birds.append(bird)
 
     def dAndVecTo(self, bird2):
         b2center = bird2.center
@@ -55,43 +48,64 @@ class Bird(object):
         self.shape[0] = p1
         self.shape[1] = p2
         self.shape[2] = p3
-        pygame.draw.polygon(screen, 1, self.shape)
+        pygame.gfxdraw.filled_polygon(screen, self.shape, (250,200,200))
 
     def updateAngle(self):
         for bird in self.birds:
             dAndVec = self.dAndVecTo(bird)
             if dAndVec[0]<self.turnDist:
                 vector = pygame.math.Vector2(dAndVec[1], dAndVec[2])
-                if self.ID == 1:
-                    print("Angle from bird #" + str(self.ID) + " to bird #" + str(bird.getID()) + ": " + str(self.movement.angle_to(vector)))
-                    print("Distance from bird #" + str(self.ID) + " to bird #" + str(bird.getID()) + ": " + str(dAndVec[0]))
-                if self.movement.angle_to(vector) >= 0:
-                    self.angle = self.angle - self.angularVel
-                if self.movement.angle_to(vector) < 0:
-                    self.angle = self.angle + self.angularVel
+                angleTo = self.movement.angle_to(vector)
+                if angleTo < 0:
+                    angleTo = angleTo + 360
+                if not dAndVec[0] == 0:
+                    print("Angle from bird #" + str(self.ID) + " to bird #" + str(bird.ID) + ": " + str(self.movement.angle_to(vector)))
+                    print("Distance from bird #" + str(self.ID) + " to bird #" + str(bird.ID) + ": " + str(dAndVec[0]))
+                    if angleTo > 270:
+                        self.angle = self.angle + self.angularVel
+                    elif angleTo < 90:
+                        self.angle = self.angle - self.angularVel
         #bounds
+        right = False
+        left = False
+        top = False
+        bot = False
         if self.center[0] > width-self.turnDist and (self.angle >= 0 and self.angle <= PI):
             self.angle = self.angle + self.angularVel
+            right = True
         if self.center[0] > width-self.turnDist and (self.angle > PI):
             self.angle = self.angle - self.angularVel
+            right = True
         if self.center[0] < self.turnDist and (self.angle <= PI):
             self.angle = self.angle - self.angularVel
+            left = True
         if self.center[0] < self.turnDist and (self.angle > PI):
             self.angle = self.angle + self.angularVel
+            left = True
         if self.center[1] > height-self.turnDist and (self.angle >= 3*PI/2 or self.angle <= PI/2):
             self.angle = self.angle - self.angularVel
+            bot = True
         if self.center[1] > height-self.turnDist and (self.angle >= PI/2 and self.angle < 3*PI/2):
             self.angle = self.angle + self.angularVel
+            bot = True
         if self.center[1] < self.turnDist and (self.angle <= PI/2 or self.angle > 3*PI/2):
             self.angle = self.angle + self.angularVel
+            top = True
         if self.center[1] < self.turnDist and (self.angle > PI/2 and self.angle <= 3*PI/2):
             self.angle = self.angle - self.angularVel
+            top = True
+        #corners
+        if (left and top) or (right and top) or (left and bot) or (right and bot):
+            self.angle = self.angle + self.angularVel
+
+        #keep angle within 0 and 2PI
         if self.angle > 2*PI:
             self.angle = self.angle - 2*PI
         if self.angle < 0:
             self.angle = self.angle + 2*PI
 
     def update(self, birds):
+        self.birds = birds
         self.updateAngle()
         self.movement = pygame.math.Vector2(self.vel*math.cos(self.angle),self.vel*math.sin(self.angle))
         self.center[0] = self.center[0] + self.movement.x
@@ -106,11 +120,12 @@ class Bird(object):
             self.center[1] = height + 50
         self.draw()
 
+
 def run():
     running = True
     while running:
-        clock.tick(60)
-        pygame.draw.rect(screen, pygame.Color("#AAAAAA"), [0,0, width, height])
+        clock.tick(50)
+        pygame.draw.rect(screen, pygame.Color("#222222"), [0,0, width, height])
         keys = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -122,14 +137,11 @@ def run():
         pygame.display.flip()
 
 def start():
-    for i in range(5):
+    for i in range(40):
         x = random.randrange(100,width-100,1)
         y = random.randrange(100,height-100,1)
         angle = random.random()*(2*PI)
-        b = Bird(x,y, angle, i)
-        birdList.append(b)
-    for bird in birdList:
-        bird.setBirds()
+        birdList.append(Bird(x,y, angle, i))
     run()
 
 start()
