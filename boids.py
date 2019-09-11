@@ -8,8 +8,8 @@ running = False
 birdList = []
 
 clock = pygame.time.Clock()
-width=600
-height=600
+width=1280
+height=720
 PI = math.pi
 
 screen = pygame.display.set_mode([width, height])
@@ -26,8 +26,9 @@ class Bird(object):
     movement = 0
     center = [0,0]
     angularVel = .1
-    turnDist = 70
+    turnDist = 30
     ID = 0
+    boidRange = 200
 
     def __init__(self, x, y, angle, ID):
         super(Bird, self).__init__()
@@ -51,12 +52,18 @@ class Bird(object):
         pygame.gfxdraw.filled_polygon(screen, self.shape, (250,50,100))
 
     def updateAngle(self):
+
+        #keep angle within 0 and 2PI
+        if self.angle > 2*PI:
+            self.angle = self.angle - 2*PI
+        if self.angle < 0:
+            self.angle = self.angle + 2*PI
+            
         angleAvg = 0
         for bird in self.birds:
             dAndVec = self.dAndVecTo(bird)
             if dAndVec[0]<self.turnDist:
                 if not dAndVec[0] == 0: #if not self
-                    angleAvg = angleAvg + self.angle
                     vector = pygame.math.Vector2(dAndVec[1], dAndVec[2])
                     angleTo = self.movement.angle_to(vector)
                     if angleTo < 0:
@@ -71,14 +78,11 @@ class Bird(object):
                         self.angle = self.angle + self.angularVel
                     elif angleTo < 90:
                         self.angle = self.angle - self.angularVel
+            if dAndVec[0] < self.boidRange:
+                angleAvg = angleAvg + bird.angle
 
-                    #try to match abngle of nearby birds
-        angleAvg = angleAvg / (len(self.birds)-1)
-        print("Average angle near bird #" + str(self.ID) + ": " + str())
-        if self.angle > angleAvg:
-            self.angle = self.angle - self.angularVel
-        elif self.angle < angleAvg:
-            self.angle = self.angle + self.angularVel
+
+
         #bounds
         right = False
         left = False
@@ -112,11 +116,17 @@ class Bird(object):
         if (left and top) or (right and top) or (left and bot) or (right and bot):
             self.angle = self.angle + self.angularVel
 
-        #keep angle within 0 and 2PI
-        if self.angle > 2*PI:
-            self.angle = self.angle - 2*PI
-        if self.angle < 0:
-            self.angle = self.angle + 2*PI
+        #adjust for average angle
+        angleAvg = angleAvg / len(self.birds)
+        print("Average angle near bird #" + str(self.ID) + " with angle " + str(self.angle)+ ": " + str(angleAvg))
+        if self.angle > angleAvg+PI/6:
+            print("angle of bird #" + str(self.ID) + " decreasing")
+            self.angle = self.angle - .5*self.angularVel
+        elif self.angle < angleAvg-PI/6:
+            print("angle of bird #" + str(self.ID) + " increasing")
+            self.angle = self.angle + .5*self.angularVel
+
+
 
     def update(self, birds):
         self.birds = birds
@@ -151,7 +161,7 @@ def run():
         pygame.display.flip()
 
 def start():
-    for i in range(40):
+    for i in range(10):
         x = random.randrange(100,width-100,1)
         y = random.randrange(100,height-100,1)
         angle = random.random()*(2*PI)
