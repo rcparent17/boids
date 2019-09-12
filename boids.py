@@ -8,7 +8,7 @@ running = False
 birdList = []
 
 clock = pygame.time.Clock()
-width=1280
+width=720
 height=720
 PI = math.pi
 
@@ -28,7 +28,7 @@ class Bird(object):
     angularVel = .1
     turnDist = 30
     ID = 0
-    boidRange = 200
+    boidRange = 100
 
     def __init__(self, x, y, angle, ID):
         super(Bird, self).__init__()
@@ -58,7 +58,7 @@ class Bird(object):
             self.angle = self.angle - 2*PI
         if self.angle < 0:
             self.angle = self.angle + 2*PI
-            
+
         angleAvg = 0
         for bird in self.birds:
             dAndVec = self.dAndVecTo(bird)
@@ -119,12 +119,14 @@ class Bird(object):
         #adjust for average angle
         angleAvg = angleAvg / len(self.birds)
         print("Average angle near bird #" + str(self.ID) + " with angle " + str(self.angle)+ ": " + str(angleAvg))
-        if self.angle > angleAvg+PI/6:
+
+        if self.angle > angleAvg and self.angle-angleAvg>PI/6:
             print("angle of bird #" + str(self.ID) + " decreasing")
-            self.angle = self.angle - .5*self.angularVel
-        elif self.angle < angleAvg-PI/6:
+            self.angle = self.angle - self.angularVel
+
+        elif self.angle < angleAvg and angleAvg-self.angle>PI/6:
             print("angle of bird #" + str(self.ID) + " increasing")
-            self.angle = self.angle + .5*self.angularVel
+            self.angle = self.angle + self.angularVel
 
 
 
@@ -161,7 +163,7 @@ def run():
         pygame.display.flip()
 
 def start():
-    for i in range(10):
+    for i in range(50):
         x = random.randrange(100,width-100,1)
         y = random.randrange(100,height-100,1)
         angle = random.random()*(2*PI)
